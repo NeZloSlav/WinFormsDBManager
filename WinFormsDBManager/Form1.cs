@@ -7,7 +7,6 @@ namespace WinFormsDBManager
     {
         DataSet ds;
         SqlDataAdapter adapter;
-        SqlCommandBuilder commandBuilder;
         string connectionString = @"Server=.\SQLEXPRESS;Database=userdb;Trusted_Connection=True";
         string sql = "SELECT * FROM Users";
 
@@ -38,7 +37,23 @@ namespace WinFormsDBManager
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                adapter = new SqlDataAdapter(sql, connection);
+                SqlCommandBuilder commandBuilder = new SqlCommandBuilder(adapter);
+
+                adapter.InsertCommand = new SqlCommand("sp_CreateUser", connection);
+                adapter.InsertCommand.CommandType = CommandType.StoredProcedure;
+                adapter.InsertCommand.Parameters.Add(new SqlParameter("@name", SqlDbType.NVarChar, 50, "Name"));
+                adapter.InsertCommand.Parameters.Add(new SqlParameter("@age", SqlDbType.Int, 0, "Age"));
+
+                SqlParameter parameter = adapter.InsertCommand.Parameters.Add("@Id", SqlDbType.Int, 0, "Id");
+                parameter.Direction = ParameterDirection.Output;
+
+                adapter.Update(ds);
+            }
         }
 
         private void btnDelete_Click(object sender, EventArgs e)
